@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Couple's Weight Loss Tracker | Motivation & Progress</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Inter', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+        }
+        body {
+            background: linear-gradient(145deg, #f0f4f8 0%, #d9e2ec 100%);
+            margin: 0;
+            padding: 24px 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        /* header */
+        .hero {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .hero h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, #1f3b4c, #2c5a6e);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin: 0 0 6px 0;
+        }
+        .hero p {
+            color: #2c3e4e;
+            font-weight: 500;
+        }
+        /* cards layout */
+        .dashboard {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        .stats-card {
+            flex: 1;
+            min-width: 200px;
+            background: white;
+            border-radius: 32px;
+            padding: 1.2rem 1rem;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            backdrop-filter: blur(2px);
+            transition: transform 0.2s;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        .stats-card:hover {
+            transform: translateY(-4px);
+        }
+        .stats-card h3 {
+            margin: 0 0 8px 0;
+            font-weight: 600;
+            color: #1e4663;
+            font-size: 1.1rem;
+        }
+        .stats-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #0f2c3b;
+        }
+        .stats-sub {
+            font-size: 0.8rem;
+            color: #5a6e7c;
+            margin-top: 6px;
+        }
+        .trend-up { color: #e26d5c; }
+        .trend-down { color: #2b9b7a; }
+        /* tables section */
+        .tracker-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 28px;
+            margin-bottom: 32px;
+        }
+        .person-card {
+            flex: 1;
+            background: white;
+            border-radius: 36px;
+            box-shadow: 0 18px 30px rgba(0,0,0,0.08);
+            overflow: hidden;
+            padding: 1.2rem 1.2rem 1.5rem;
+            transition: all 0.2s;
+        }
+        .person-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 2px solid #e2edf2;
+            padding-bottom: 12px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+        .person-name {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(120deg, #2c5a6e, #1f3b4c);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .goal-badge {
+            background: #eef2f7;
+            border-radius: 60px;
+            padding: 4px 14px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #2c5a6e;
+        }
+        .entry-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .entry-table th {
+            text-align: left;
+            padding: 10px 6px 6px 0;
+            font-weight: 600;
+            color: #3b6e8b;
+            border-bottom: 1px solid #cbdbe2;
+        }
+        .entry-table td {
+            padding: 8px 6px 8px 0;
+            border-bottom: 1px solid #e9edf2;
+            font-weight: 500;
+        }
+        .weight-cell {
+            font-weight: 700;
+        }
+        .percent-change {
+            font-weight: 600;
+            border-radius: 20px;
+            padding: 2px 8px;
+            display: inline-block;
+        }
+        .positive-change {
+            background: #ffe1de;
+            color: #c23b22;
+        }
+        .negative-change {
+            background: #dff6f0;
+            color: #1f6e58;
+        }
+        .neutral-change {
+            background: #eef2f5;
+            color: #5c6f87;
+        }
+        .add-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 18px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .add-row input {
+            flex: 2;
+            padding: 10px 12px;
+            border-radius: 40px;
+            border: 1px solid #cbd5e1;
+            font-size: 0.9rem;
+            background: #fefefe;
+        }
+        .add-row button {
+            background: #2c5a6e;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .add-row button:hover {
+            background: #1e4458;
+            transform: scale(0.97);
+        }
+        .reset-btn {
+            background: #e2e8f0;
+            color: #2d3e50;
+            margin-left: 6px;
+        }
+        .graph-section {
+            background: white;
+            border-radius: 32px;
+            padding: 1.2rem;
+            margin-top: 20px;
+            box-shadow: 0 12px 24px rgba(0,0,0,0.05);
+        }
+        .graph-title {
+            font-weight: 700;
+            font-size: 1.3rem;
+            margin-bottom: 16px;
+            color: #1c4e66;
+            padding-left: 10px;
+        }
+        .charts-flex {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+        }
+        .chart-box {
+            flex: 1;
+            min-width: 280px;
+            background: #fafdff;
+            border-radius: 28px;
+            padding: 12px;
+        }
+        canvas {
+            max-height: 280px;
+            width: 100%;
+        }
+        .footer-note {
+            text-align: center;
+            font-size: 0.75rem;
+            margin-top: 28px;
+            color: #4a6272;
+        }
+        @media (max-width: 720px) {
+            .person-name { font-size: 1.4rem; }
+            .stats-value { font-size: 1.4rem; }
+            .add-row input { width: 100%; }
+        }
+        button {
+            cursor: pointer;
+        }
+        .input-group {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="hero">
+        <h1>🏆 Together We Transform 🏆</h1>
+        <p>Daily / Weekly weight tracker • percentage changes • color coded • goals & projections</p>
+    </div>
+
+    <!-- quick stats overview (both) -->
+    <div class="dashboard" id="dashboardStats">
+        <div class="stats-card"><h3>👨‍🦰 My total lost</h3><div class="stats-value" id="totalLostMe">—</div><div class="stats-sub">from start</div></div>
+        <div class="stats-card"><h3>👩‍🦰 Her total lost</h3><div class="stats-value" id="totalLostHer">—</div><div class="stats-sub">from start</div></div>
+        <div class="stats-card"><h3>📉 Combined % lost</h3><div class="stats-value" id="combinedPct">—</div><div class="stats-sub">avg % from start</div></div>
+        <div class="stats-card"><h3>🎯 Days to goal (est)</h3><div class="stats-value" id="daysToGoal">—</div><div class="stats-sub">based on last 7 days trend</div></div>
+    </div>
+
+    <!-- Tracker tables for each person -->
+    <div class="tracker-panel">
+        <!-- ME (starting 340) -->
+        <div class="person-card" id="cardMe">
+            <div class="person-header">
+                <span class="person-name">🔥 Your progress (340 lbs)</span>
+                <span class="goal-badge">🎯 Goal: 220 lbs</span>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="entry-table" id="meTable">
+                    <thead>
+                        <tr><th>Date</th><th>Weight (lbs)</th><th>Δ vs previous</th><th>Total % from start</th></tr>
+                    </thead>
+                    <tbody id="meTableBody">
+                        <tr><td colspan="4" style="text-align:center;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="add-row">
+                <input type="date" id="meDateInput" />
+                <input type="number" id="meWeightInput" step="0.1" placeholder="Weight (lbs)" />
+                <button id="addMeEntry">➕ Add entry</button>
+                <button id="resetMeData" class="reset-btn">⟳ Reset</button>
+            </div>
+            <div class="footer-note" style="margin-top: 12px;">✅ Color: <span style="background:#dff6f0; padding:2px 8px;">Green = loss ↓</span> &nbsp; <span style="background:#ffe1de; padding:2px 8px;">Red = gain ↑</span></div>
+        </div>
+
+        <!-- HER (starting 174) -->
+        <div class="person-card" id="cardHer">
+            <div class="person-header">
+                <span class="person-name">🌸 Partner's progress (174 lbs)</span>
+                <span class="goal-badge">🎯 Goal: 135 lbs</span>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="entry-table" id="herTable">
+                    <thead><tr><th>Date</th><th>Weight (lbs)</th><th>Δ vs previous</th><th>Total % from start</th></tr></thead>
+                    <tbody id="herTableBody"><tr><td colspan="4" style="text-align:center;">Loading...</td></tr></tbody>
+                </table>
+            </div>
+            <div class="add-row">
+                <input type="date" id="herDateInput" />
+                <input type="number" id="herWeightInput" step="0.1" placeholder="Weight (lbs)" />
+                <button id="addHerEntry">➕ Add entry</button>
+                <button id="resetHerData" class="reset-btn">⟳ Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphs: individual weight & percentage loss over time -->
+    <div class="graph-section">
+        <div class="graph-title">📈 Progress Visuals (weight & % from start)</div>
+        <div class="charts-flex">
+            <div class="chart-box"><canvas id="meWeightChart" width="400" height="250"></canvas><div style="text-align:center; font-weight:500;">Your weight trend</div></div>
+            <div class="chart-box"><canvas id="herWeightChart" width="400" height="250"></canvas><div style="text-align:center; font-weight:500;">Her weight trend</div></div>
+        </div>
+        <div class="charts-flex" style="margin-top: 20px;">
+            <div class="chart-box"><canvas id="mePctChart" width="400" height="250"></canvas><div style="text-align:center;">Your % lost from start</div></div>
+            <div class="chart-box"><canvas id="herPctChart" width="400" height="250"></canvas><div style="text-align:center;">Her % lost from start</div></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ------------------- DATA STORAGE -------------------
+    const START_ME = 340;
+    const START_HER = 174;
+    const GOAL_ME = 220;
+    const GOAL_HER = 135;
+
+    let meEntries = [];
+    let herEntries = [];
+
+    function getTodayStr() {
+        return new Date().toISOString().slice(0,10);
+    }
+
+    function loadData() {
+        const storedMe = localStorage.getItem("weightTracker_me");
+        const storedHer = localStorage.getItem("weightTracker_her");
+        if(storedMe) {
+            meEntries = JSON.parse(storedMe);
+        } else {
+            meEntries = [{ date: getTodayStr(), weight: START_ME }];
+        }
+        if(storedHer) {
+            herEntries = JSON.parse(storedHer);
+        } else {
+            herEntries = [{ date: getTodayStr(), weight: START_HER }];
+        }
+        meEntries.sort((a,b) => new Date(a.date) - new Date(b.date));
+        herEntries.sort((a,b) => new Date(a.date) - new Date(b.date));
+        if(meEntries.length === 0 || meEntries[0].weight !== START_ME) {
+            if(meEntries.length === 0 || new Date(meEntries[0].date) > new Date(getTodayStr())) {
+                meEntries.unshift({ date: getTodayStr(), weight: START_ME });
+            } else {
+                meEntries[0].weight = START_ME;
+            }
+        }
+        if(herEntries.length === 0 || herEntries[0].weight !== START_HER) {
+            if(herEntries.length === 0 || new Date(herEntries[0].date) > new Date(getTodayStr())) {
+                herEntries.unshift({ date: getTodayStr(), weight: START_HER });
+            } else {
+                herEntries[0].weight = START_HER;
+            }
+        }
+        saveData();
+    }
+
+    function saveData() {
+        localStorage.setItem("weightTracker_me", JSON.stringify(meEntries));
+        localStorage.setItem("weightTracker_her", JSON.stringify(herEntries));
+    }
+
+    function addEntry(person, date, weight) {
+        if(!date || isNaN(weight) || weight <= 0) return false;
+        const entries = person === 'me' ? meEntries : herEntries;
+        const newEntry = { date, weight: parseFloat(weight) };
+        const existingIndex = entries.findIndex(e => e.date === date);
+        if(existingIndex !== -1) {
+            entries[existingIndex] = newEntry;
+        } else {
+            entries.push(newEntry);
+        }
+        entries.sort((a,b) => new Date(a.date) - new Date(b.date));
+        if(person === 'me') meEntries = entries;
+        else herEntries = entries;
+        saveData();
+        return true;
+    }
+
+    function resetPerson(person) {
+        if(person === 'me') {
+            meEntries = [{ date: getTodayStr(), weight: START_ME }];
+        } else {
+            herEntries = [{ date: getTodayStr(), weight: START_HER }];
+        }
+        saveData();
+    }
+
+    function getPercentChange(entries, idx) {
+        if(idx === 0) return null;
+        const prev = entries[idx-1].weight;
+        const curr = entries[idx].weight;
+        const diff = ((curr - prev) / prev) * 100;
+        return diff;
+    }
+
+    function getTotalPercentFromStart(entries, idx) {
+        const startWeight = entries[0].weight;
+        const currWeight = entries[idx].weight;
+        return ((currWeight - startWeight) / startWeight) * 100;
+    }
+
+    function renderTables() {
+        const meBody = document.getElementById("meTableBody");
+        if(meBody) {
+            meBody.innerHTML = "";
+            meEntries.forEach((entry, idx) => {
+                const row = meBody.insertRow();
+                const dateCell = row.insertCell(0);
+                const weightCell = row.insertCell(1);
+                const changeCell = row.insertCell(2);
+                const totalPctCell = row.insertCell(3);
+                dateCell.innerText = entry.date;
+                weightCell.innerText = entry.weight.toFixed(1);
+                weightCell.className = "weight-cell";
+                const deltaPct = getPercentChange(meEntries, idx);
+                if(deltaPct !== null) {
+                    const absDelta = (entry.weight - meEntries[idx-1].weight).toFixed(1);
+                    const sign = deltaPct > 0 ? "+" : "";
+                    const deltaHtml = `${sign}${deltaPct.toFixed(2)}% (${absDelta} lbs)`;
+                    const colorClass = deltaPct > 0 ? "positive-change" : (deltaPct < 0 ? "negative-change" : "neutral-change");
+                    changeCell.innerHTML = `<span class="percent-change ${colorClass}">${deltaHtml}</span>`;
+                } else {
+                    changeCell.innerText = "—";
+                }
+                const totalPct = getTotalPercentFromStart(meEntries, idx);
+                const pctVal = totalPct.toFixed(2);
+                const pctColor = totalPct > 0 ? "positive-change" : (totalPct < 0 ? "negative-change" : "neutral-change");
+                totalPctCell.innerHTML = `<span class="percent-change ${pctColor}">${totalPct > 0 ? '+' : ''}${pctVal}%</span>`;
+            });
+        }
+        const herBody = document.getElementById("herTableBody");
+        if(herBody) {
+            herBody.innerHTML = "";
+            herEntries.forEach((entry, idx) => {
+                const row = herBody.insertRow();
+                row.insertCell(0).innerText = entry.date;
+                row.insertCell(1).innerText = entry.weight.toFixed(1);
+                const deltaPct = getPercentChange(herEntries, idx);
+                if(deltaPct !== null) {
+                    const absDelta = (entry.weight - herEntries[idx-1].weight).toFixed(1);
+                    const sign = deltaPct > 0 ? "+" : "";
+                    const deltaHtml = `${sign}${deltaPct.toFixed(2)}% (${absDelta} lbs)`;
+                    const colorClass = deltaPct > 0 ? "positive-change" : (deltaPct < 0 ? "negative-change" : "neutral-change");
+                    row.insertCell(2).innerHTML = `<span class="percent-change ${colorClass}">${deltaHtml}</span>`;
+                } else {
+                    row.insertCell(2).innerText = "—";
+                }
+                const totalPct = getTotalPercentFromStart(herEntries, idx);
+                const pctVal = totalPct.toFixed(2);
+                const pctColor = totalPct > 0 ? "positive-change" : (totalPct < 0 ? "negative-change" : "neutral-change");
+                row.insertCell(3).innerHTML = `<span class="percent-change ${pctColor}">${totalPct > 0 ? '+' : ''}${pctVal}%</span>`;
+            });
+        }
+        updateDashboardStats();
+        updateCharts();
+    }
+
+    function updateDashboardStats() {
+        const startMe = meEntries[0]?.weight || START_ME;
+        const currMe = meEntries[meEntries.length-1]?.weight || START_ME;
+        const lostMe = (startMe - currMe).toFixed(1);
+        const startHer = herEntries[0]?.weight || START_HER;
+        const currHer = herEntries[herEntries.length-1]?.weight || START_HER;
+        const lostHer = (startHer - currHer).toFixed(1);
+        document.getElementById("totalLostMe").innerText = `${lostMe} lbs`;
+        document.getElementById("totalLostHer").innerText = `${lostHer} lbs`;
+        const pctMeTotal = ((currMe - startMe)/startMe)*100;
+        const pctHerTotal = ((currHer - startHer)/startHer)*100;
+        const combinedAvg = ((pctMeTotal + pctHerTotal)/2).toFixed(2);
+        document.getElementById("combinedPct").innerHTML = `${combinedAvg}% <span style="font-size:0.7rem;">(avg)</span>`;
+        let daysEstimate = "—";
+        const estimateDays = (entries, startWeight, goalWeight) => {
+            if(entries.length < 2) return null;
+            const last = entries[entries.length-1];
+            let oldestIndex = Math.max(0, entries.length-3);
+            let weightDiff = last.weight - entries[oldestIndex].weight;
+            let dateDiff = (new Date(last.date) - new Date(entries[oldestIndex].date)) / (1000*3600*24);
+            if(dateDiff <= 0) return null;
+            let avgLossPerDay = -weightDiff / dateDiff;
+            if(avgLossPerDay <= 0.01) return null;
+            let lbsToGoal = last.weight - goalWeight;
+            if(lbsToGoal <= 0) return 0;
+            return Math.round(lbsToGoal / avgLossPerDay);
+        };
+        const meDays = estimateDays(meEntries, START_ME, GOAL_ME);
+        const herDays = estimateDays(herEntries, START_HER, GOAL_HER);
+        if(meDays !== null && herDays !== null) {
+            let avgDays = Math.round((meDays + herDays)/2);
+            daysEstimate = avgDays > 0 ? avgDays : "✨ Goal reached soon!";
+        } else if(meDays !== null) daysEstimate = meDays;
+        else if(herDays !== null) daysEstimate = herDays;
+        document.getElementById("daysToGoal").innerHTML = daysEstimate !== "—" ? `${daysEstimate} days` : "need more data";
+    }
+
+    let meWeightChart, herWeightChart, mePctChart, herPctChart;
+    function initCharts() {
+        const ctxMe = document.getElementById('meWeightChart').getContext('2d');
+        const ctxHer = document.getElementById('herWeightChart').getContext('2d');
+        const ctxMePct = document.getElementById('mePctChart').getContext('2d');
+        const ctxHerPct = document.getElementById('herPctChart').getContext('2d');
+        meWeightChart = new Chart(ctxMe, { type: 'line', data: { labels: [], datasets: [] }, options: { responsive: true, maintainAspectRatio: true } });
+        herWeightChart = new Chart(ctxHer, { type: 'line', data: { labels: [], datasets: [] }, options: { responsive: true } });
+        mePctChart = new Chart(ctxMePct, { type: 'line', data: { labels: [], datasets: [] }, options: { responsive: true } });
+        herPctChart = new Chart(ctxHerPct, { type: 'line', data: { labels: [], datasets: [] }, options: { responsive: true } });
+    }
+
+    function updateCharts() {
+        const meLabels = meEntries.map(e => e.date.slice(5));
+        const meWeights = meEntries.map(e => e.weight);
+        const mePcts = meEntries.map((_, idx) => getTotalPercentFromStart(meEntries, idx));
+        const herLabels = herEntries.map(e => e.date.slice(5));
+        const herWeights = herEntries.map(e => e.weight);
+        const herPcts = herEntries.map((_, idx) => getTotalPercentFromStart(herEntries, idx));
+        meWeightChart.data = { labels: meLabels, datasets: [{ label: 'Your Weight (lbs)', data: meWeights, borderColor: '#2c5a6e', backgroundColor: 'rgba(44,90,110,0.1)', tension: 0.2, fill: true, pointBackgroundColor: '#1f3b4c' }] };
+        meWeightChart.update();
+        herWeightChart.data = { labels: herLabels, datasets: [{ label: 'Her Weight (lbs)', data: herWeights, borderColor: '#b16e5c', backgroundColor: 'rgba(177,110,92,0.1)', tension: 0.2, fill: true }] };
+        herWeightChart.update();
+        mePctChart.data = { labels: meLabels, datasets: [{ label: '% lost from start', data: mePcts, borderColor: '#2b9b7a', backgroundColor: 'rgba(43,155,122,0.1)', tension: 0.2, fill: true, pointBackgroundColor: '#1f6e58' }] };
+        mePctChart.update();
+        herPctChart.data = { labels: herLabels, datasets: [{ label: '% lost from start', data: herPcts, borderColor: '#e26d5c', backgroundColor: 'rgba(226,109,92,0.1)', tension: 0.2, fill: true }] };
+        herPctChart.update();
+    }
+
+    function bindEvents() {
+        document.getElementById("addMeEntry").addEventListener("click", () => {
+            let date = document.getElementById("meDateInput").value;
+            let weight = parseFloat(document.getElementById("meWeightInput").value);
+            if(!date) date = getTodayStr();
+            if(isNaN(weight) || weight <= 0) { alert("Enter valid weight (lbs)"); return; }
+            addEntry('me', date, weight);
+            document.getElementById("meWeightInput").value = "";
+            document.getElementById("meDateInput").value = "";
+            renderTables();
+        });
+        document.getElementById("addHerEntry").addEventListener("click", () => {
+            let date = document.getElementById("herDateInput").value;
+            let weight = parseFloat(document.getElementById("herWeightInput").value);
+            if(!date) date = getTodayStr();
+            if(isNaN(weight) || weight <= 0) { alert("Enter valid weight (lbs)"); return; }
+            addEntry('her', date, weight);
+            document.getElementById("herWeightInput").value = "";
+            document.getElementById("herDateInput").value = "";
+            renderTables();
+        });
+        document.getElementById("resetMeData").addEventListener("click", () => { resetPerson('me'); renderTables(); });
+        document.getElementById("resetHerData").addEventListener("click", () => { resetPerson('her'); renderTables(); });
+        document.getElementById("meDateInput").value = getTodayStr();
+        document.getElementById("herDateInput").value = getTodayStr();
+    }
+
+    loadData();
+    initCharts();
+    renderTables();
+    bindEvents();
+</script>
+</body>
+</html>
